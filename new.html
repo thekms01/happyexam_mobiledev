@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e1f396;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .top-users {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .user {
+            text-align: center;
+        }
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .rank-1 {
+            order: 2;
+        }
+        .rank-2 {
+            order: 1;
+        }
+        .rank-3 {
+            order: 3;
+        }
+        .list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span>←</span>
+            <h1>Leaderboard</h1>
+            <span>⇱</span>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('weekly')">Weekly</button>
+            <button class="tab" onclick="switchTab('allTime')">All Time</button>
+        </div>
+        <div class="top-users">
+            <div class="user rank-2">
+                <img src="/api/placeholder/60/60" alt="Leslie" class="avatar">
+                <div>Leslie</div>
+                <div>2</div>
+            </div>
+            <div class="user rank-1">
+                <img src="/api/placeholder/60/60" alt="You" class="avatar">
+                <div>You</div>
+                <div>1</div>
+            </div>
+            <div class="user rank-3">
+                <img src="/api/placeholder/60/60" alt="Alex" class="avatar">
+                <div>Alex</div>
+                <div>3</div>
+            </div>
+        </div>
+        <ul class="list">
+            <li class="list-item"><span>04 Kristin Watson</span><span>230</span></li>
+            <li class="list-item"><span>05 Darlene Robertson</span><span>190</span></li>
+            <li class="list-item"><span>06 Savannah Nguyen</span><span>180</span></li>
+            <li class="list-item"><span>07 Jenny Wilson</span><span>175</span></li>
+            <li class="list-item"><span>08 Dianne Russell</span><span>160</span></li>
+        </ul>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            // Here you would typically update the leaderboard data
+            // based on the selected tab (weekly or all time)
+        }
+    </script>
+</body>
+</html>

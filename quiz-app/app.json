@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "HappyExam",
+    "slug": "HappyExam",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#21a935"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#21a935"
+      },
+      "package": "com.thekms.HappyExam"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fcdef566-14cf-4120-aee3-ac103a986fc6"
+      }
+    }
+  }
+}

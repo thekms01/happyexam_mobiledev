@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Quiz Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Barlow', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .question {
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .option {
+            padding: 10px;
+            border: 2px solid #e5e5e5;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option:hover {
+            background-color: #e5e5e5;
+        }
+        .option.correct {
+            background-color: #d7ffb8;
+            border-color: #58a700;
+            color: #58a700;
+        }
+        .option.wrong {
+            background-color: #ffebeb;
+            border-color: #d32f2f;
+            color: #d32f2f;
+        }
+        #timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #start-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        #player-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .player-score {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .player-score.you {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+        }
+        .player-score.opponent {
+            background-color: #fff7e6;
+            border: 1px solid #ffd591;
+        }
+        #name-input {
+            margin-bottom: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="setup">
+            <input type="text" id="name-input" placeholder="Enter your name">
+            <button id="start-button">Start Game</button>
+        </div>
+        <div id="waiting" style="display: none;">Waiting for another player...</div>
+        <div id="quiz" style="display: none;">
+            <div id="player-info">
+                <div id="player1" class="player-score you"></div>
+                <div id="player2" class="player-score opponent"></div>
+            </div>
+            <div id="timer">60</div>
+            <div id="question" class="question"></div>
+            <div id="options" class="options"></div>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const gameContainer = document.getElementById('game-container');
+        const setupDiv = document.getElementById('setup');
+        const nameInput = document.getElementById('name-input');
+        const startButton = document.getElementById('start-button');
+        const waitingDiv = document.getElementById('waiting');
+        const quizDiv = document.getElementById('quiz');
+        const player1Div = document.getElementById('player1');
+        const player2Div = document.getElementById('player2');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const timerElement = document.getElementById('timer');
+        const resultElement = document.getElementById('result');
+
+        let currentQuestion;
+        let timeLeft;
+        let timer;
+        let playerName;
+        let opponentName;
+        let playerId;
+
+        startButton.addEventListener('click', () => {
+            playerName = nameInput.value.trim();
+            if (playerName) {
+                setupDiv.style.display = 'none';
+                socket.emit('ready', playerName);
+            } else {
+                showPopup('Please enter your name');
+            }
+        });
+
+        socket.on('playerId', (id) => {
+            playerId = id;
+        });
+
+        socket.on('waitingForPlayer', () => {
+            waitingDiv.style.display = 'block';
+            quizDiv.style.display = 'none';
+        });
+
+        socket.on('startGame', (players) => {
+            waitingDiv.style.display = 'none';
+            quizDiv.style.display = 'block';
+            const opponent = players.find(p => p.id !== playerId);
+            opponentName = opponent ? opponent.name : 'Opponent';
+            updateScores(0, 0);
+        });
+
+        socket.on('newQuestion', (question) => {
+            currentQuestion = question;
+            displayQuestion(question);
+            startTimer();
+        });
+
+        socket.on('updateScores', (scores) => {
+            updateScores(scores[playerId], scores[Object.keys(scores).find(id => id !== playerId)]);
+        });
+
+        socket.on('gameOver', (scores) => {
+            clearInterval(timer);
+            const playerScore = scores[playerId];
+            const opponentScore = scores[Object.keys(scores).find(id => id !== playerId)];
+            
+            gameContainer.innerHTML = `
+                <h2>Game Over!</h2>
+                <p>Your score: ${playerScore}</p>
+                <p>${opponentName}'s score: ${opponentScore}</p>
+                <p>${playerScore > opponentScore ? 'You win!' : (playerScore === opponentScore ? 'It\'s a tie!' : 'You lose!')}</p>
+            `;
+        });
+
+        function displayQuestion(question) {
+            questionElement.textContent = question.text;
+            optionsElement.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('option');
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectAnswer(index);
+                optionsElement.appendChild(optionElement);
+            });
+            resultElement.textContent = '';
+        }
+
+        function selectAnswer(index) {
+            clearInterval(timer);
+            const options = optionsElement.children;
+            for (let i = 0; i < options.length; i++) {
+                options[i].onclick = null;
+                if (i === index) {
+                    options[i].classList.add(i === currentQuestion.answer ? 'correct' : 'wrong');
+                } else if (i === currentQuestion.answer) {
+                    options[i].classList.add('correct');
+                }
+            }
+            
+            socket.emit('answer', index);
+        }
+
+        function startTimer() {
+            timeLeft = 60;
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    selectAnswer(-1); // Time's up, send invalid answer
+                }
+            }, 1000);
+        }
+
+        function updateScores(playerScore, opponentScore) {
+            player1Div.textContent = `You: ${playerScore}`;
+            player2Div.textContent = `${opponentName}: ${opponentScore}`;
+        }
+
+        function showPopup(message) {
+            const popup = document.createElement('div');
+            popup.classList.add('popup');
+            popup.textContent = message;
+            document.body.appendChild(popup);
+            setTimeout(() => {
+                document.body.removeChild(popup);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
